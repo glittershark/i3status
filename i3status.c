@@ -203,6 +203,12 @@ int main(int argc, char *argv[]) {
                 CFG_END()
         };
 
+        cfg_opt_t mpd_opts[] = {
+                CFG_STR("format", "auto", CFGF_NONE),
+                CFG_STR("format_stopped", "Stopped", CFGF_NONE),
+                CFG_END()
+        };
+
         cfg_opt_t run_watch_opts[] = {
                 CFG_STR("pidfile", NULL, CFGF_NONE),
                 CFG_STR("format", "%title: %status", CFGF_NONE),
@@ -305,6 +311,7 @@ int main(int argc, char *argv[]) {
         cfg_opt_t opts[] = {
                 CFG_STR_LIST("order", "{}", CFGF_NONE),
                 CFG_SEC("general", general_opts, CFGF_NONE),
+                CFG_SEC("mpd", mpd_opts, CFGF_NONE),
                 CFG_SEC("run_watch", run_watch_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("path_exists", path_exists_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_SEC("wireless", wireless_opts, CFGF_TITLE | CFGF_MULTI),
@@ -459,6 +466,12 @@ int main(int argc, char *argv[]) {
                                 print_seperator();
 
                         const char *current = cfg_getnstr(cfg, "order", j);
+
+                        CASE_SEC("mpd") {
+                                SEC_OPEN_MAP("mpd");
+                                print_mpd(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_stopped"));
+                                SEC_CLOSE_MAP;
+                        }
 
                         CASE_SEC("ipv6") {
                                 SEC_OPEN_MAP("ipv6");
