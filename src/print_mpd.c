@@ -5,6 +5,17 @@
 
 #include "i3status.h"
 
+#define OUTPUT_OPTION(option_name, tag_name) \
+if (BEGINS_WITH(walk+1, option_name)) { \
+        const char *value = mpd_song_get_tag(song, tag_name, 0); \
+        if (value == NULL) { \
+                *(outwalk++) = '?'; \
+        } else { \
+                outwalk += sprintf(outwalk, "%s", value); \
+        } \
+        walk += strlen(option_name); \
+}
+
 void print_mpd(yajl_gen json_gen, char *buffer, const char *format, const char *format_stopped) {
         const char *walk;
         char *outwalk = buffer;
@@ -34,73 +45,18 @@ void print_mpd(yajl_gen json_gen, char *buffer, const char *format, const char *
                         continue;
                 }
 
-                if (BEGINS_WITH(walk+1, "artist")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_ARTIST, 0));
-                        walk += strlen("artist");
-                }
-
-                if (BEGINS_WITH(walk+1, "album_artist")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_ALBUM_ARTIST, 0));
-                        walk += strlen("album_artist");
-                } else if (BEGINS_WITH(walk+1, "album")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_ALBUM, 0));
-                        walk += strlen("album");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "track")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TRACK, 0));
-                        walk += strlen("track");
-                }
-
-                if (BEGINS_WITH(walk+1, "title")) {
-                        outwalk += sprintf(outwalk, "%s", mpd_song_get_tag(song, MPD_TAG_TITLE, 0));
-                        walk += strlen("title");
-                }
+                OUTPUT_OPTION("artist", MPD_TAG_ARTIST)
+                OUTPUT_OPTION("album_artist", MPD_TAG_ALBUM_ARTIST)
+                else OUTPUT_OPTION("album", MPD_TAG_ALBUM)
+                OUTPUT_OPTION("title", MPD_TAG_TITLE)
+                OUTPUT_OPTION("track", MPD_TAG_TRACK)
+                OUTPUT_OPTION("name", MPD_TAG_NAME)
+                OUTPUT_OPTION("genre", MPD_TAG_GENRE)
+                OUTPUT_OPTION("date", MPD_TAG_DATE)
+                OUTPUT_OPTION("composer", MPD_TAG_COMPOSER)
+                OUTPUT_OPTION("performer", MPD_TAG_PERFORMER)
+                OUTPUT_OPTION("comment", MPD_TAG_COMMENT)
+                OUTPUT_OPTION("disc", MPD_TAG_DISC)
         }
 
 out:
