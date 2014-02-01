@@ -34,7 +34,9 @@ void print_mpd(yajl_gen json_gen, char *buffer, const char *format, const char *
         song = mpd_run_current_song(conn);
         if (song == NULL) {
                 outwalk += sprintf(outwalk, "%s", format_stopped);
-                goto out;
+                mpd_connection_free(conn);
+                OUTPUT_FULL_TEXT(buffer);
+                return;
         }
 
         walk = format;
@@ -59,7 +61,6 @@ void print_mpd(yajl_gen json_gen, char *buffer, const char *format, const char *
                 OUTPUT_OPTION("disc", MPD_TAG_DISC)
         }
 
-out:
         mpd_song_free(song);
         mpd_connection_free(conn);
         OUTPUT_FULL_TEXT(buffer);
