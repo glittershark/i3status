@@ -104,7 +104,28 @@ void print_mpd(
                 return;
         }
 
-        format_string(song, format, buffer, &outwalk);
+        const char *walk;
+
+        for (walk = format; *walk != '\0'; walk++) {
+                if (*walk != '%') {
+                        *(outwalk++) = *walk;
+                        continue;
+                }
+
+                OUTPUT_OPTION("artist", MPD_TAG_ARTIST)
+                OUTPUT_OPTION("album_artist", MPD_TAG_ALBUM_ARTIST)
+                else OUTPUT_OPTION("album", MPD_TAG_ALBUM)
+                OUTPUT_OPTION("title", MPD_TAG_TITLE)
+                OUTPUT_OPTION("track", MPD_TAG_TRACK)
+                OUTPUT_OPTION("name", MPD_TAG_NAME)
+                OUTPUT_OPTION("genre", MPD_TAG_GENRE)
+                OUTPUT_OPTION("date", MPD_TAG_DATE)
+                OUTPUT_OPTION("composer", MPD_TAG_COMPOSER)
+                OUTPUT_OPTION("performer", MPD_TAG_PERFORMER)
+                OUTPUT_OPTION("comment", MPD_TAG_COMMENT)
+                OUTPUT_OPTION("disc", MPD_TAG_DISC)
+        }
+
 
         const char *uri = mpd_song_get_uri(song);
 
