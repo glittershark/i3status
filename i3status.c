@@ -30,6 +30,7 @@
 
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
+#include <libnotify/notify.h>
 
 #include "i3status.h"
 
@@ -206,6 +207,8 @@ int main(int argc, char *argv[]) {
         cfg_opt_t mpd_opts[] = {
                 CFG_STR("format", "auto", CFGF_NONE),
                 CFG_STR("format_stopped", "Stopped", CFGF_NONE),
+                CFG_STR("notif_header_format", "%title", CFGF_NONE),
+                CFG_STR("notif_body_format", "%artist - %album", CFGF_NONE),
                 CFG_END()
         };
 
@@ -439,6 +442,9 @@ int main(int argc, char *argv[]) {
         if ((general_socket = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
                 die("Could not create socket\n");
 
+        // Initialize libnotify
+        notify_init("i3status");
+
         int interval = cfg_getint(cfg_general, "interval");
 
         /* One memory page which each plugin can use to buffer output.
@@ -452,6 +458,7 @@ int main(int argc, char *argv[]) {
         while (1) {
                 if (exit_upon_signal) {
                         fprintf(stderr, "Exiting due to signal.\n");
+                        notify_uninit();
                         exit(1);
                 }
                 struct timeval tv;
@@ -469,7 +476,11 @@ int main(int argc, char *argv[]) {
 
                         CASE_SEC("mpd") {
                                 SEC_OPEN_MAP("mpd");
-                                print_mpd(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "format_stopped"));
+                                print_mpd(json_gen, buffer,
+                                          cfg_getstr(sec, "format"),
+                                          cfg_getstr(sec, "format_stopped"),
+                                          cfg_getstr(sec, "notif_header_format"),
+                                          cfg_getstr(sec, "notif_body_format"));
                                 SEC_CLOSE_MAP;
                         }
 
@@ -587,4 +598,5 @@ int main(int argc, char *argv[]) {
                 struct timespec ts = {interval - 1 - (current_timeval.tv_sec % interval), (10e5 - current_timeval.tv_usec) * 1000};
                 nanosleep(&ts, NULL);
         }
+        notify_uninit();
 }

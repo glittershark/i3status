@@ -15,10 +15,13 @@ CFLAGS+=-std=gnu99
 CFLAGS+=-pedantic
 CPPFLAGS+=-DSYSCONFDIR=\"$(SYSCONFDIR)\"
 CPPFLAGS+=-DVERSION=\"${GIT_VERSION}\"
-CFLAGS+=-Iinclude
+CFLAGS+=-Iinclude \
+        $(shell pkg-config gtk+-2.0 --cflags)
 LIBS+=-lconfuse
 LIBS+=-lyajl
 LIBS+=-lmpdclient
+LIBS+=-lnotify \
+      $(shell pkg-config gtk+-2.0 --libs)
 
 VERSION:=$(shell git describe --tags --abbrev=0)
 GIT_VERSION:="$(shell git describe --tags --always) ($(shell git log --pretty=format:%cd --date=short -n1))"
