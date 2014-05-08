@@ -234,79 +234,79 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 minutes -= (hours * 60);
                 (void)snprintf(remainingbuf, sizeof(remainingbuf), "%02dh%02d",
                                max(hours, 0), max(minutes, 0));
-		if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
-		    && present_rate < low_threshold) {
-			START_COLOR("color_bad");
-			colorful_output = true;
-		} else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
-			   && remaining < (u_int) low_threshold) {
-			START_COLOR("color_bad");
-			colorful_output = true;
-		}
+                if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+                    && present_rate < low_threshold) {
+                        START_COLOR("color_bad");
+                        colorful_output = true;
+                } else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
+                           && remaining < (u_int) low_threshold) {
+                        START_COLOR("color_bad");
+                        colorful_output = true;
+                }
         }
 #elif defined(__OpenBSD__)
-	/*
-	 * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
-	 * the generic interface on macppc/sparc64/zaurus, instead of using sysctl(3) and
-	 * probing acpi(4) devices.
-	 */
-	struct apm_power_info apm_info;
-	int apm_fd;
+        /*
+         * We're using apm(4) here, which is the interface to acpi(4) on amd64/i386 and
+         * the generic interface on macppc/sparc64/zaurus, instead of using sysctl(3) and
+         * probing acpi(4) devices.
+         */
+        struct apm_power_info apm_info;
+        int apm_fd;
 
-	apm_fd = open("/dev/apm", O_RDONLY);
-	if (apm_fd < 0) {
-		OUTPUT_FULL_TEXT("can't open /dev/apm");
-		return;
-	}
-	if (ioctl(apm_fd, APM_IOC_GETPOWER, &apm_info) < 0)
-		OUTPUT_FULL_TEXT("can't read power info");
+        apm_fd = open("/dev/apm", O_RDONLY);
+        if (apm_fd < 0) {
+                OUTPUT_FULL_TEXT("can't open /dev/apm");
+                return;
+        }
+        if (ioctl(apm_fd, APM_IOC_GETPOWER, &apm_info) < 0)
+                OUTPUT_FULL_TEXT("can't read power info");
 
-	close(apm_fd);
+        close(apm_fd);
 
-	/* Don't bother to go further if there's no battery present. */
-	if ((apm_info.battery_state == APM_BATTERY_ABSENT) ||
-	    (apm_info.battery_state == APM_BATT_UNKNOWN)) {
-		OUTPUT_FULL_TEXT(format_down);
-		return;
-	}
+        /* Don't bother to go further if there's no battery present. */
+        if ((apm_info.battery_state == APM_BATTERY_ABSENT) ||
+            (apm_info.battery_state == APM_BATT_UNKNOWN)) {
+                OUTPUT_FULL_TEXT(format_down);
+                return;
+        }
 
-	switch(apm_info.ac_state) {
-	case APM_AC_OFF:
-		status = CS_DISCHARGING;
-		break;
-	case APM_AC_ON:
-		status = CS_CHARGING;
-		break;
-	default:
-		/* If we don't know what's going on, just assume we're discharging. */
-		status = CS_DISCHARGING;
-		break;
-	}
+        switch(apm_info.ac_state) {
+        case APM_AC_OFF:
+                status = CS_DISCHARGING;
+                break;
+        case APM_AC_ON:
+                status = CS_CHARGING;
+                break;
+        default:
+                /* If we don't know what's going on, just assume we're discharging. */
+                status = CS_DISCHARGING;
+                break;
+        }
 
-	(void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
+        (void)snprintf(statusbuf, sizeof(statusbuf), "%s", BATT_STATUS_NAME(status));
         (void)snprintf(percentagebuf, sizeof(percentagebuf), "%02d%%", apm_info.battery_life);
 
-	if (status == CS_DISCHARGING && low_threshold > 0) {
-		if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
-		    && apm_info.battery_life < low_threshold) {
-			START_COLOR("color_bad");
-			colorful_output = true;
-		} else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
-			   && apm_info.minutes_left < (u_int) low_threshold) {
-			START_COLOR("color_bad");
-			colorful_output = true;
-		}
-	}
+        if (status == CS_DISCHARGING && low_threshold > 0) {
+                if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
+                    && apm_info.battery_life < low_threshold) {
+                        START_COLOR("color_bad");
+                        colorful_output = true;
+                } else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
+                           && apm_info.minutes_left < (u_int) low_threshold) {
+                        START_COLOR("color_bad");
+                        colorful_output = true;
+                }
+        }
 
-	/* Can't give a meaningful value for remaining minutes if we're charging. */
-	if (status != CS_CHARGING) {
-		(void)snprintf(remainingbuf, sizeof(remainingbuf), "%d", apm_info.minutes_left);
-	} else {
-		(void)snprintf(remainingbuf, sizeof(remainingbuf), "%s", "(CHR)");
-	}
+        /* Can't give a meaningful value for remaining minutes if we're charging. */
+        if (status != CS_CHARGING) {
+                (void)snprintf(remainingbuf, sizeof(remainingbuf), "%d", apm_info.minutes_left);
+        } else {
+                (void)snprintf(remainingbuf, sizeof(remainingbuf), "%s", "(CHR)");
+        }
 
-	if (colorful_output)
-		END_COLOR;
+        if (colorful_output)
+                END_COLOR;
 #endif
 
 #define EAT_SPACE_FROM_OUTPUT_IF_EMPTY(_buf) \

@@ -1,0 +1,468 @@
+'\" t
+.\"     Title: i3status
+.\"    Author: [see the "AUTHORS" section]
+.\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
+.\"      Date: 01/31/2014
+.\"    Manual: i3 Manual
+.\"    Source: i3status v2.8
+.\"  Language: English
+.\"
+.TH "I3STATUS" "1" "01/31/2014" "i3status v2\&.8" "i3 Manual"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+i3status \- Generates a status line for i3bar, dzen2 or xmobar
+.SH "SYNOPSIS"
+.sp
+i3status [\-c configfile] [\-h] [\-v]
+.SH "OPTIONS"
+.PP
+\-c
+.RS 4
+Specifies an alternate configuration file path\&. By default, i3status looks for configuration files in the following order:
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 1.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  1." 4.2
+.\}
+~/\&.i3status\&.conf
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 2.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  2." 4.2
+.\}
+~/\&.config/i3status/config (or $XDG_CONFIG_HOME/i3status/config if set)
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 3.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  3." 4.2
+.\}
+/etc/i3status\&.conf
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04' 4.\h'+01'\c
+.\}
+.el \{\
+.sp -1
+.IP "  4." 4.2
+.\}
+/etc/xdg/i3status/config (or $XDG_CONFIG_DIRS/i3status/config if set)
+.RE
+.RE
+.SH "DESCRIPTION"
+.sp
+i3status is a small program (about 1500 SLOC) for generating a status bar for i3bar, dzen2, xmobar or similar programs\&. It is designed to be very efficient by issuing a very small number of system calls, as one generally wants to update such a status line every second\&. This ensures that even under high load, your status bar is updated correctly\&. Also, it saves a bit of energy by not hogging your CPU as much as spawning the corresponding amount of shell commands would\&.
+.SH "CONFIGURATION"
+.sp
+The basic idea of i3status is that you can specify which "modules" should be used (the order directive)\&. You can then configure each module with its own section\&. For every module, you can specify the output format\&. See below for a complete reference\&.
+.PP
+\fBSample configuration\fR. 
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+general {
+        output_format = "dzen2"
+        colors = true
+        interval = 5
+}
+
+order += "ipv6"
+order += "disk /"
+order += "run_watch DHCP"
+order += "run_watch VPNC"
+order += "path_exists VPN"
+order += "wireless wlan0"
+order += "ethernet eth0"
+order += "battery 0"
+order += "cpu_temperature 0"
+order += "load"
+order += "tztime local"
+order += "tztime berlin"
+
+wireless wlan0 {
+        format_up = "W: (%quality at %essid, %bitrate) %ip"
+        format_down = "W: down"
+}
+
+ethernet eth0 {
+        # if you use %speed, i3status requires the cap_net_admin capability
+        format_up = "E: %ip (%speed)"
+        format_down = "E: down"
+}
+
+battery 0 {
+        format = "%status %percentage %remaining %emptytime"
+        format_down = "No battery"
+        path = "/sys/class/power_supply/BAT%d/uevent"
+        low_threshold = 10
+}
+
+run_watch DHCP {
+        pidfile = "/var/run/dhclient*\&.pid"
+}
+
+run_watch VPNC {
+        # file containing the PID of a vpnc process
+        pidfile = "/var/run/vpnc/pid"
+}
+
+path_exists VPN {
+        # path exists when a VPN tunnel launched by nmcli/nm\-applet is active
+        path = "/proc/sys/net/ipv4/conf/tun0"
+}
+
+tztime local {
+        format = "%Y\-%m\-%d %H:%M:%S"
+}
+
+tztime berlin {
+        format = "%Y\-%m\-%d %H:%M:%S %Z"
+        timezone = "Europe/Berlin"
+}
+
+load {
+        format = "%5min"
+}
+
+cpu_temperature 0 {
+        format = "T: %degrees \(deC"
+        path = "/sys/devices/platform/coretemp\&.0/temp1_input"
+}
+
+disk "/" {
+        format = "%free"
+}
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+.SS "General"
+.sp
+The colors directive will disable all colors if you set it to false\&. You can also specify the colors that will be used to display "good", "degraded" or "bad" values using the color_good, color_degraded or color_bad directives, respectively\&. Those directives are only used if color support is not disabled by the colors directive\&. The input format for color values is the canonical RGB hexadecimal triplet (with no separators between the colors), prefixed by a hash character ("#")\&.
+.sp
+\fBExample configuration\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+color_good = "#00FF00"
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Likewise, you can use the color_separator directive to specify the color that will be used to paint the separator bar\&. The separator is always output in color, even when colors are disabled by the colors directive\&.
+.sp
+The interval directive specifies the time in seconds for which i3status will sleep before printing the next status line\&.
+.sp
+Using output_format you can chose which format strings i3status should use in its output\&. Currently available are:
+.PP
+i3bar
+.RS 4
+i3bar comes with i3 and provides a workspace bar which does the right thing in multi\-monitor situations\&. It also comes with tray support and can display the i3status output\&. This output type uses JSON to pass as much meta\-information to i3bar as possible (like colors, which blocks can be shortened in which way, etc\&.)\&.
+.RE
+.PP
+dzen2
+.RS 4
+Dzen is a general purpose messaging, notification and menuing program for X11\&. It was designed to be scriptable in any language and integrate well with window managers like dwm, wmii and xmonad though it will work with any windowmanger
+.RE
+.PP
+xmobar
+.RS 4
+xmobar is a minimalistic, text based, status bar\&. It was designed to work with the xmonad Window Manager\&.
+.RE
+.PP
+term
+.RS 4
+Use ANSI Escape sequences to produce a terminal\-output as close as possible to the graphical outputs\&. This makes debugging your config file a little bit easier because the terminal\-output of i3status becomes much more readable, but should only used for such quick glances, because it will only support very basic output\-features (for example you only get 3 bits of color depth)\&.
+.RE
+.PP
+none
+.RS 4
+Does not use any color codes\&. Separates values by the pipe symbol\&. This should be used with i3bar and can be used for custom scripts\&.
+.RE
+.sp
+It\(cqs also possible to use the color_good, color_degraded, color_bad directives to define specific colors per module\&. If one of these directives is defined in a module section its value will override the value defined in the general section just for this module\&.
+.SS "IPv6"
+.sp
+This module gets the IPv6 address used for outgoing connections (that is, the best available public IPv6 address on your computer)\&.
+.sp
+\fBExample format_up\fR: %ip
+.sp
+\fBExample format_down\fR: no IPv6
+.SS "Disk"
+.sp
+Gets used, free, available and total amount of bytes on the given mounted filesystem\&.
+.sp
+These values can also be expressed in percentages with the percentage_used, percentage_free, percentage_avail and percentage_used_of_avail formats\&.
+.sp
+Byte sizes are presented in a human readable format using a set of prefixes whose type can be specified via the "prefix_type" option\&. Three sets of prefixes are available:
+.PP
+binary
+.RS 4
+IEC prefixes (Ki, Mi, Gi, Ti) represent multiples of powers of 1024\&. This is the default\&.
+.RE
+.PP
+decimal
+.RS 4
+SI prefixes (k, M, G, T) represent multiples of powers of 1000\&.
+.RE
+.PP
+custom
+.RS 4
+The custom prefixes (K, M, G, T) represent multiples of powers of 1024\&.
+.RE
+.sp
+\fBExample order\fR: disk /mnt/usbstick
+.sp
+\fBExample format\fR: %free (%avail)/ %total
+.sp
+\fBExample format\fR: %percentage_used used, %percentage_free free, %percentage_avail avail
+.sp
+\fBExample prefix_type\fR: custom
+.SS "Run\-watch"
+.sp
+Expands the given path to a pidfile and checks if the process ID found inside is valid (that is, if the process is running)\&. You can use this to check if a specific application, such as a VPN client or your DHCP client is running\&.
+.sp
+\fBExample order\fR: run_watch DHCP
+.sp
+\fBExample format\fR: %title: %status
+.SS "Path\-exists"
+.sp
+Checks if the given path exists in the filesystem\&. You can use this to check if something is active, like for example a VPN tunnel managed by NetworkManager\&.
+.sp
+\fBExample order\fR: path_exists VPN
+.sp
+\fBExample format\fR: %title: %status
+.SS "Wireless"
+.sp
+Gets the link quality and ESSID of the given wireless network interface\&. You can specify different format strings for the network being connected or not connected\&.
+.sp
+\fBExample order\fR: wireless wlan0
+.sp
+\fBExample format\fR: W: (%quality at %essid, %bitrate) %ip
+.SS "Ethernet"
+.sp
+Gets the IP address and (if possible) the link speed of the given ethernet interface\&. Getting the link speed requires the cap_net_admin capability\&. Set it using setcap cap_net_admin=ep $(which i3status)\&.
+.sp
+\fBExample order\fR: ethernet eth0
+.sp
+\fBExample format\fR: E: %ip (%speed)
+.SS "Battery"
+.sp
+Gets the status (charging, discharging, running), percentage, remaining time and power consumption (in Watts) of the given battery and when it\(cqs estimated to be empty\&. If you want to use the last full capacity instead of the design capacity (when using the design capacity, it may happen that your battery is at 23% when fully charged because it\(cqs old\&. In general, I want to see it this way, because it tells me how worn off my battery is\&.), just specify last_full_capacity = true\&.
+.sp
+If you want the battery percentage to be shown without decimals, add integer_battery_capacity = true\&.
+.sp
+If your battery is represented in a non\-standard path in /sys, be sure to modify the "path" property accordingly, i\&.e\&. pointing to the uevent file on your system\&. The first occurence of %d gets replaced with the battery number, but you can just hard\-code a path as well\&.
+.sp
+It is possible to define a low_threshold that causes the battery text to be colored red\&. The low_threshold type can be of threshold_type "time" or "percentage"\&. So, if you configure low_threshold to 10 and threshold_type to "time", and your battery lasts another 9 minutes, it will be colored red\&.
+.sp
+\fBExample order\fR: battery 0
+.sp
+\fBExample format\fR: %status %remaining (%emptytime %consumption)
+.sp
+\fBExample format_down\fR: No battery
+.sp
+\fBExample low_threshold\fR: 30
+.sp
+\fBExample threshold_type\fR: time
+.sp
+\fBExample path\fR: /sys/class/power_supply/CMB1/uevent
+.SS "CPU\-Temperature"
+.sp
+Gets the temperature of the given thermal zone\&. It is possible to define a max_threshold that will color the temperature red in case the specified thermal zone is getting too hot\&. Defaults to 75 degrees C\&.
+.sp
+\fBExample order\fR: cpu_temperature 0
+.sp
+\fBExample format\fR: T: %degrees \(deC
+.sp
+\fBExample max_threshold\fR: 42
+.sp
+\fBExample path\fR: /sys/devices/platform/coretemp\&.0/temp1_input
+.SS "CPU Usage"
+.sp
+Gets the percentual CPU usage from /proc/stat (Linux) or sysctl(3) (FreeBSD/OpenBSD)\&.
+.sp
+\fBExample order\fR: cpu_usage
+.sp
+\fBExample format\fR: %usage
+.SS "Load"
+.sp
+Gets the system load (number of processes waiting for CPU time in the last 1, 5 and 15 minutes)\&. It is possible to define a max_threshold that will color the load value red in case the load average of the last minute is getting higher than the configured threshold\&. Defaults to 5\&.
+.sp
+\fBExample order\fR: load
+.sp
+\fBExample format\fR: %1min %5min %15min
+.sp
+\fBExample max_threshold\fR: "0,1"
+.SS "Time"
+.sp
+Outputs the current time in the local timezone\&. To use a different timezone, you can set the TZ environment variable, or use the tztime module\&. See strftime(3) for details on the format string\&.
+.sp
+\fBExample order\fR: time
+.sp
+\fBExample format\fR: %Y\-%m\-%d %H:%M:%S
+.SS "TzTime"
+.sp
+Outputs the current time in the given timezone\&. If no timezone is given, local time will be used\&. See strftime(3) for details on the format string\&. The system\(cqs timezone database is usually installed in /usr/share/zoneinfo\&. Files below that path make for valid timezone strings, e\&.g\&. for /usr/share/zoneinfo/Europe/Berlin you can set timezone to Europe/Berlin in the tztime module\&.
+.sp
+\fBExample order\fR: tztime berlin
+.sp
+\fBExample format\fR: %Y\-%m\-%d %H:%M:%S %Z
+.sp
+\fBExample timezone\fR: Europe/Berlin
+.SS "DDate"
+.sp
+Outputs the current discordian date in user\-specified format\&. See ddate(1) for details on the format string\&. \fBNote\fR: Neither \fB%\&.\fR nor \fB%X\fR are implemented yet\&.
+.sp
+\fBExample order\fR: ddate
+.sp
+\fBExample format\fR: %{%a, %b %d%}, %Y%N \- %H
+.SS "Volume"
+.sp
+Outputs the volume of the specified mixer on the specified device\&. Works only on Linux because it uses ALSA\&. A simplified configuration can be used on FreeBSD and OpenBSD due to the lack of ALSA, the device and mixer options can be ignored on these systems\&. On these systems the OSS API is used instead to query /dev/mixer directly if mixer_dix is \-1, otherwise /dev/mixer+mixer_idx+\&.
+.sp
+\fBExample order\fR: volume master
+.sp
+\fBExample format\fR: ♪: %volume \fBExample format_muted\fR: ♪: 0%%
+.sp
+\fBExample configuration\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+volume master {
+        format = "♪: %volume"
+        format_muted = "♪: muted (%volume)"
+        device = "default"
+        mixer = "Master"
+        mixer_idx = 0
+}
+.fi
+.if n \{\
+.RE
+.\}
+.SH "USING I3STATUS WITH DZEN2"
+.sp
+After installing dzen2, you can directly use it with i3status\&. Just ensure that output_format is set to dzen2\&.
+.sp
+\fBExample for usage of i3status with dzen2\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+i3status | dzen2 \-fg white \-ta r \-w 1280 \e
+\-fn "\-misc\-fixed\-medium\-r\-normal\-\-13\-120\-75\-75\-C\-70\-iso8859\-1"
+.fi
+.if n \{\
+.RE
+.\}
+.SH "USING I3STATUS WITH XMOBAR"
+.sp
+To get xmobar to start, you might need to copy the default configuration file to ~/\&.xmobarrc\&. Also, ensure that the output_format option for i3status is set to xmobar\&.
+.sp
+\fBExample for usage of i3status with xmobar\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+i3status | xmobar \-o \-t "%StdinReader%" \-c "[Run StdinReader]"
+.fi
+.if n \{\
+.RE
+.\}
+.SH "WHAT ABOUT MEMORY USAGE OR CPU FREQUENCY?"
+.sp
+While talking about two specific things, please understand this section as a general explanation why your favorite information is not included in i3status\&.
+.sp
+Let\(cqs talk about memory usage specifically\&. It is hard to measure memory in a way which is accurate or meaningful\&. An in\-depth understanding of how paging and virtual memory work in your operating system is required\&. Furthermore, even if we had a well\-defined way of displaying memory usage and you would understand it, I think that it\(cqs not helpful to repeatedly monitor your memory usage\&. One reason for that is that I have not run out of memory in the last few years\&. Memory has become so cheap that even in my 4 year old notebook, I have 8 GiB of RAM\&. Another reason is that your operating system will do the right thing anyway: Either you have not enough RAM for your workload, but you need to do it anyway, then your operating system will swap\&. Or you don\(cqt have enough RAM and you want to restrict your workload so that it fits, then the operating system will kill the process using too much RAM and you can act accordingly\&.
+.sp
+For CPU frequency, the situation is similar\&. Many people don\(cqt understand how frequency scaling works precisely\&. The generally recommended CPU frequency governor ("ondemand") changes the CPU frequency far more often than i3status could display it\&. The display number is therefore often incorrect and doesn\(cqt tell you anything useful either\&.
+.sp
+In general, i3status wants to display things which you would look at occasionally anyways, like the current date/time, whether you are connected to a WiFi network or not, and if you have enough disk space to fit that 4\&.3 GiB download\&.
+.sp
+However, if you need to look at some kind of information more than once in a while (like checking repeatedly how full your RAM is), you are probably better off with a script doing that, which pops up an alert when your RAM usage reaches a certain threshold\&. After all, the point of computers is not to burden you with additional boring tasks like repeatedly checking a number\&.
+.SH "EXTERNAL SCRIPTS/PROGRAMS WITH I3STATUS"
+.sp
+In i3status, we don\(cqt want to implement process management again\&. Therefore, there is no module to run arbitrary scripts or commands\&. Instead, you should use your shell, for example like this:
+.sp
+\fBExample for prepending the i3status output\fR:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+#!/bin/sh
+# shell script to prepend i3status with more stuff
+
+i3status | while :
+do
+        read line
+        echo "mystuff | $line" || exit 1
+done
+.fi
+.if n \{\
+.RE
+.\}
+.sp
+Put that in some script, say \&.bin/my_i3status\&.sh and execute that instead of i3status\&.
+.sp
+Note that if you want to use the JSON output format (with colors in i3bar), you need to use a slightly more complex wrapper script\&. There are examples in the contrib/ folder, see http://code\&.i3wm\&.org/i3status/tree/contrib
+.SH "SIGNALS"
+.sp
+When receiving SIGUSR1, i3status\(cqs nanosleep() will be interrupted and thus you will force an update\&. You can use killall \-USR1 i3status to force an update after changing the system volume, for example\&.
+.SH "SEE ALSO"
+.sp
+strftime(3), date(1), glob(3), dzen2(1), xmobar(1)
+.SH "AUTHORS"
+.sp
+Michael Stapelberg and contributors
+.sp
+Thorsten Toepper
+.sp
+Baptiste Daroussin
+.sp
+Axel Wagner
+.sp
+Fernando Tarlá Cardoso Lemos

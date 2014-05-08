@@ -3,6 +3,7 @@
  *
  * i3status – Generates a status line for dzen2 or xmobar
  *
+ * Copyright © 2014 Griffin Smith <wildgriffin45 at gmail dot com>
  * Copyright © 2008-2012 Michael Stapelberg and contributors
  * Copyright © 2009 Thorsten Toepper <atsutane at freethoughts dot de>
  * Copyright © 2010 Axel Wagner <mail at merovius dot de>
@@ -252,6 +253,7 @@ int main(int argc, char *argv[]) {
                 CFG_STR("format_down", "No battery", CFGF_NONE),
                 CFG_STR("path", "/sys/class/power_supply/BAT%d/uevent", CFGF_NONE),
                 CFG_INT("low_threshold", 30, CFGF_NONE),
+                CFG_INT("critical_threshold", 10, CFGF_NONE),
                 CFG_STR("threshold_type", "time", CFGF_NONE),
                 CFG_BOOL("last_full_capacity", false, CFGF_NONE),
                 CFG_BOOL("integer_battery_capacity", false, CFGF_NONE),
