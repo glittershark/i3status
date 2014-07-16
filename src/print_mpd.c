@@ -10,9 +10,8 @@
 #include "i3status.h"
 
 #define OUTPUT_OPTION(option_name, tag_name) \
-if (BEGINS_WITH(walk+1, option_name)) { \
-        const char *value = mpd_song_get_tag(song, tag_name, 0); \
-        if (value == NULL) { \
+if (BEGINS_WITH(walk + 1, option_name)) { \
+        if ((value = mpd_song_get_tag(song, tag_name, 0)) == NULL) { \
                 *(outwalk++) = '?'; \
         } else { \
                 outwalk += sprintf(outwalk, "%s", value); \
@@ -32,6 +31,7 @@ void format_string(
         assert(outwalk == str);
 
         const char *walk;
+        const char *value;
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
@@ -105,6 +105,7 @@ void print_mpd(
         }
 
         const char *walk;
+        const char *value;
 
         for (walk = format; *walk != '\0'; walk++) {
                 if (*walk != '%') {
