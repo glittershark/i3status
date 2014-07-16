@@ -138,7 +138,7 @@ void print_mpd(
 
         // Copy the new URI into the static prev_song string
         free(prev_song);
-        if ((prev_song = (char *)malloc(sizeof(char) * strlen(uri))) == NULL)
+        if ((prev_song = (char *)malloc(sizeof(char) * (strlen(uri) + 1))) == NULL)
                 goto out;
         strcpy(prev_song, uri);
 
