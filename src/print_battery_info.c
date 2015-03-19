@@ -25,6 +25,7 @@
 #endif
 
 static char *prev_status;
+static bool prev_critical;
 
 struct battery_info {
         const char *status;
@@ -32,6 +33,7 @@ struct battery_info {
         const char *remaining;
         const char *emptytime;
         const char *consumption;
+        bool critical;
 };
 
 struct battery_info battery_info_new(
@@ -39,7 +41,8 @@ struct battery_info battery_info_new(
         const char *percentage,
         const char *remaining,
         const char *emptytime,
-        const char *consumption
+        const char *consumption,
+        bool critical
 ) {
         struct battery_info info;
 
@@ -48,6 +51,7 @@ struct battery_info battery_info_new(
         info.remaining = remaining;
         info.emptytime = emptytime;
         info.consumption = consumption;
+        info.critical = critical;
 
         return info;
 }
@@ -99,6 +103,11 @@ void battery_send_notification(
         battery_format_string(info, body_format, body, &outwalk);
 
         NotifyNotification *battery_notification = notify_notification_new(header, body, "dialog-information");
+
+        if (info.critical) {
+                notify_notification_set_urgency(battery_notification, NOTIFY_URGENCY_CRITICAL);
+        }
+
         notify_notification_show(battery_notification, NULL);
         g_object_unref(G_OBJECT(battery_notification));
 }
@@ -106,6 +115,7 @@ void battery_send_notification(
 #define BATT_STATUS_NAME(status) \
     (status == CS_CHARGING ? "CHR" : \
         (status == CS_DISCHARGING ? "BAT" : "FULL"))
+
 /*
  * Get battery information from /sys. Note that it uses the design capacity to
  * calculate the percentage, not the last full capacity, so you can see how
@@ -128,12 +138,15 @@ void print_battery_info(
 ) {
         time_t empty_time;
         struct tm *empty_tm;
+
         char buf[1024];
         char statusbuf[16];
         char percentagebuf[16];
         char remainingbuf[256];
         char emptytimebuf[256];
         char consumptionbuf[256];
+        bool critical = true;
+
         const char *walk, *last;
         char *outwalk = buffer;
         bool watt_as_unit;
@@ -248,14 +261,14 @@ void print_battery_info(
                 seconds -= (minutes * 60);
 
                 if (status == CS_DISCHARGING && low_threshold > 0) {
-                        if (strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0
-                                && percentage_remaining < low_threshold) {
+                        if ((strncmp(threshold_type, "percentage", strlen(threshold_type)) == 0 &&
+                                percentage_remaining < low_threshold
+                        ) || (strncmp(threshold_type, "time", strlen(threshold_type)) == 0 &&
+                                seconds_remaining < 60 * low_threshold
+                        )) {
                                 START_COLOR("color_bad");
                                 colorful_output = true;
-                        } else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
-                                && seconds_remaining < 60 * low_threshold) {
-                                START_COLOR("color_bad");
-                                colorful_output = true;
+                                critical = true;
                         } else {
                             colorful_output = false;
                         }
@@ -410,7 +423,8 @@ void print_battery_info(
                 percentagebuf,
                 remainingbuf,
                 emptytimebuf,
-                consumptionbuf
+                consumptionbuf,
+                critical
         );
 
 #define EAT_SPACE_FROM_OUTPUT_IF_EMPTY(_buf) \
@@ -451,7 +465,8 @@ void print_battery_info(
                 }
         }
 
-        if (prev_status != NULL && strcmp(prev_status, info.status) == 0) {
+        if (prev_status != NULL && strcmp(prev_status, info.status) == 0 &&
+                        prev_critical == critical) {
             goto end;
         }
 
@@ -462,6 +477,7 @@ void print_battery_info(
             goto end;
         }
         strcpy(prev_status, info.status);
+        prev_critical = critical;
 
 end:
         if (colorful_output) { END_COLOR; }
