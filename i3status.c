@@ -251,8 +251,8 @@ int main(int argc, char *argv[]) {
         cfg_opt_t battery_opts[] = {
                 CFG_STR("format", "%status %percentage %remaining", CFGF_NONE),
                 CFG_STR("format_down", "No battery", CFGF_NONE),
-                CFG_STR("notif_header_format", "%status", CFGF_NONE),
-                CFG_STR("notif_body_format", "%percentage %remaining", CFGF_NONE),
+                CFG_STR("notif_header_format", "Battery: %status", CFGF_NONE),
+                CFG_STR("notif_body_format", "%percentage, %remaining remaining", CFGF_NONE),
                 CFG_STR("path", "/sys/class/power_supply/BAT%d/uevent", CFGF_NONE),
                 CFG_INT("low_threshold", 30, CFGF_NONE),
                 CFG_INT("critical_threshold", 10, CFGF_NONE),
