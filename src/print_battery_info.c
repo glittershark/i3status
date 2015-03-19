@@ -1,4 +1,6 @@
 // vim:ts=8:expandtab
+
+#include <assert.h>
 #include <ctype.h>
 #include <time.h>
 #include <string.h>
@@ -6,6 +8,7 @@
 #include <stdio.h>
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
+#include <libnotify/notify.h>
 
 #include "i3status.h"
 
@@ -21,6 +24,85 @@
 #include <machine/apmvar.h>
 #endif
 
+static char *prev_status;
+
+struct battery_info {
+        const char *status;
+        const char *percentage;
+        const char *remaining;
+        const char *emptytime;
+        const char *consumption;
+};
+
+struct battery_info battery_info_new(
+        const char *status,
+        const char *percentage,
+        const char *remaining,
+        const char *emptytime,
+        const char *consumption
+) {
+        struct battery_info info;
+
+        info.status = status;
+        info.percentage = percentage;
+        info.remaining = remaining;
+        info.emptytime = emptytime;
+        info.consumption = consumption;
+
+        return info;
+}
+
+#define BATTERY_OUTPUT_OPTION(option_name, property) \
+        if (BEGINS_WITH(walk + 1, option_name)) { \
+                outwalk += sprintf(outwalk, "%s", info.property); \
+                walk += strlen(option_name); \
+        }
+
+void battery_format_string(
+        const struct battery_info info,
+        const char *format,
+        char *str,
+        char **output
+) {
+        char *outwalk = *output;
+        assert(outwalk == str);
+
+        const char *walk;
+
+        for (walk = format; *walk != '\0'; walk++) {
+                if (*walk != '%') {
+                        *(outwalk++) = *walk;
+                        continue;
+                }
+
+                BATTERY_OUTPUT_OPTION("status", status)
+                BATTERY_OUTPUT_OPTION("percentage", percentage)
+                BATTERY_OUTPUT_OPTION("remaining", remaining)
+                BATTERY_OUTPUT_OPTION("emptytime", emptytime)
+                BATTERY_OUTPUT_OPTION("consumption", consumption)
+        }
+}
+
+void battery_send_notification(
+        const struct battery_info info,
+        const char *header_format,
+        const char *body_format
+) {
+        char *outwalk;
+        char header[4096];
+        char body[4096];
+
+        outwalk = header;
+        battery_format_string(info, header_format, header, &outwalk);
+
+        outwalk = body;
+        battery_format_string(info, body_format, body, &outwalk);
+
+        NotifyNotification *battery_notification = notify_notification_new(header, body, "dialog-information");
+        notify_notification_show(battery_notification, NULL);
+        g_object_unref(G_OBJECT(battery_notification));
+}
+
 #define BATT_STATUS_NAME(status) \
     (status == CS_CHARGING ? "CHR" : \
         (status == CS_DISCHARGING ? "BAT" : "FULL"))
@@ -30,7 +112,20 @@
  * worn off your battery is.
  *
  */
-void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char *path, const char *format, const char *format_down, int low_threshold, char *threshold_type, bool last_full_capacity, bool integer_battery_capacity) {
+void print_battery_info(
+        yajl_gen json_gen,
+        char *buffer,
+        int number,
+        const char *path,
+        const char *format,
+        const char *format_down,
+        const char *notif_header_format,
+        const char *notif_body_format,
+        int low_threshold,
+        char *threshold_type,
+        bool last_full_capacity,
+        bool integer_battery_capacity
+) {
         time_t empty_time;
         struct tm *empty_tm;
         char buf[1024];
@@ -305,17 +400,27 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                 (void)snprintf(remainingbuf, sizeof(remainingbuf), "%s", "(CHR)");
         }
 
-        if (colorful_output)
+        if (colorful_output) {
                 END_COLOR;
+        }
 #endif
+
+        struct battery_info info = battery_info_new(
+                statusbuf,
+                percentagebuf,
+                remainingbuf,
+                emptytimebuf,
+                consumptionbuf
+        );
 
 #define EAT_SPACE_FROM_OUTPUT_IF_EMPTY(_buf) \
         do { \
                 if (strlen(_buf) == 0) { \
-                        if (outwalk > buffer && isspace(outwalk[-1])) \
+                        if (outwalk > buffer && isspace(outwalk[-1])) { \
                                 outwalk--; \
-                        else if (isspace(*(walk+1))) \
+                        } else if (isspace(*(walk+1))) {\
                                 walk++; \
+                        } \
                 } \
         } while (0)
 
@@ -325,29 +430,40 @@ void print_battery_info(yajl_gen json_gen, char *buffer, int number, const char 
                         continue;
                 }
 
-                if (strncmp(walk+1, "status", strlen("status")) == 0) {
+                if (BEGINS_WITH(walk + 1, "status")) {
                         outwalk += sprintf(outwalk, "%s", statusbuf);
                         walk += strlen("status");
-                } else if (strncmp(walk+1, "percentage", strlen("percentage")) == 0) {
+                } else if (BEGINS_WITH(walk + 1, "percentage")) {
                         outwalk += sprintf(outwalk, "%s", percentagebuf);
                         walk += strlen("percentage");
-                } else if (strncmp(walk+1, "remaining", strlen("remaining")) == 0) {
+                } else if (BEGINS_WITH(walk + 1, "remaining")) {
                         outwalk += sprintf(outwalk, "%s", remainingbuf);
                         walk += strlen("remaining");
                         EAT_SPACE_FROM_OUTPUT_IF_EMPTY(remainingbuf);
-                } else if (strncmp(walk+1, "emptytime", strlen("emptytime")) == 0) {
+                } else if (BEGINS_WITH(walk + 1, "emptytime")) {
                         outwalk += sprintf(outwalk, "%s", emptytimebuf);
                         walk += strlen("emptytime");
                         EAT_SPACE_FROM_OUTPUT_IF_EMPTY(emptytimebuf);
-                } else if (strncmp(walk+1, "consumption", strlen("consumption")) == 0) {
+                } else if (BEGINS_WITH(walk + 1, "consumption")) {
                         outwalk += sprintf(outwalk, "%s", consumptionbuf);
                         walk += strlen("consumption");
                         EAT_SPACE_FROM_OUTPUT_IF_EMPTY(consumptionbuf);
                 }
         }
 
-        if (colorful_output)
-                END_COLOR;
+        if (prev_status != NULL && strcmp(prev_status, info.status) == 0) {
+            goto end;
+        }
 
+        battery_send_notification(info, notif_header_format, notif_body_format);
+
+        free(prev_status);
+        if ((prev_status = (char *)malloc(sizeof(char) * (strlen(info.status) + 1))) == NULL) {
+            goto end;
+        }
+        strcpy(prev_status, info.status);
+
+end:
+        if (colorful_output) { END_COLOR; }
         OUTPUT_FULL_TEXT(buffer);
 }
