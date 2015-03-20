@@ -295,6 +295,7 @@ void print_battery_info(
                                 && percentage_remaining < low_threshold) {
                                 START_COLOR("color_bad");
                                 colorful_output = true;
+                                critical = true;
                         }
                 }
         }
@@ -346,10 +347,12 @@ void print_battery_info(
                     && present_rate < low_threshold) {
                         START_COLOR("color_bad");
                         colorful_output = true;
+                        critical = true;
                 } else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
                            && remaining < (u_int) low_threshold) {
                         START_COLOR("color_bad");
                         colorful_output = true;
+                        critical = true;
                 }
         }
 #elif defined(__OpenBSD__)
@@ -399,10 +402,12 @@ void print_battery_info(
                     && apm_info.battery_life < low_threshold) {
                         START_COLOR("color_bad");
                         colorful_output = true;
+                        critical = true;
                 } else if (strncmp(threshold_type, "time", strlen(threshold_type)) == 0
                            && apm_info.minutes_left < (u_int) low_threshold) {
                         START_COLOR("color_bad");
                         colorful_output = true;
+                        critical = true;
                 }
         }
 
