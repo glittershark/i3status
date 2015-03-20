@@ -8,15 +8,17 @@ status line every second. This ensures that even under high load, your status
 bar is updated correctly. Also, it saves a bit of energy by not hogging your
 CPU as much as spawning the corresponding amount of shell commands would.
 
-This is my fork of i3status. Currently it just adds configurable display of the
-currently playing track in mpd, and notifications for track changes with
-libnotify
+### This fork adds:
+
+- Configurable display of the currently playing MPD track
+- Notifications of MPD track changes using libnotify
+- Notifications of battery state change and critical level with libnotify
 
 ## Installation
 
 Currently there is no official package for this fork of i3status, so you'll have
 to compile it yourself. Fortunately that's pretty easy - just clone the
-repository and enter the following:
+repository and run the following:
 
 ```
 make && sudo make install
