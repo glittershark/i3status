@@ -25,7 +25,7 @@
 #endif
 
 static char *prev_status;
-static bool prev_critical;
+static bool prev_critical = false;
 
 struct battery_info {
         const char *status;
@@ -104,7 +104,7 @@ void battery_send_notification(
 
         NotifyNotification *battery_notification = notify_notification_new(header, body, "dialog-information");
 
-        if (info.critical) {
+        if (info.critical == true) {
                 notify_notification_set_urgency(battery_notification, NOTIFY_URGENCY_CRITICAL);
         }
 
@@ -145,7 +145,7 @@ void print_battery_info(
         char remainingbuf[256];
         char emptytimebuf[256];
         char consumptionbuf[256];
-        bool critical = true;
+        bool critical = false;
 
         const char *walk, *last;
         char *outwalk = buffer;
