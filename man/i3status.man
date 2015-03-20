@@ -266,6 +266,12 @@ colored red. The low_threshold type can be of threshold_type "time" or
 "percentage". So, if you configure low_threshold to 10 and threshold_type to
 "time", and your battery lasts another 9 minutes, it will be colored red.
 
+Will also send libnotify notifications whenever battery status changes (when the
+computer is plugged in or unplugged, or when the battery becomes full), or
+whenever your battery crosses the configured low_threshold. The format of these
+notifications can be controlled with +notif_header_format+ and
++notif_body_format+
+
 *Example order*: +battery 0+
 
 *Example format*: +%status %remaining (%emptytime %consumption)+
@@ -375,6 +381,21 @@ volume master {
 	mixer_idx = 0
 }
 -------------------------------------------------------------
+
+=== MPD
+
+Outputs the currently playing MPD track, using libmpdclient. Will display a
+libnotify notification whenever the track changes.
+
+*Example order*: +mpd+
+
+*Example format*: +%artist - %album - %title+
+
+*Example format_stopped*: +Stopped+
+
+*Example notif_header_format*: +%title+
+
+*Example notif_body_format*: +%artist - %album+
 
 == Using i3status with dzen2
 

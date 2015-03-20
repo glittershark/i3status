@@ -2,12 +2,12 @@
 .\"     Title: i3status
 .\"    Author: [see the "AUTHORS" section]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 01/31/2014
+.\"      Date: 03/19/2015
 .\"    Manual: i3 Manual
 .\"    Source: i3status v2.8
 .\"  Language: English
 .\"
-.TH "I3STATUS" "1" "01/31/2014" "i3status v2\&.8" "i3 Manual"
+.TH "I3STATUS" "1" "03/19/2015" "i3status v2\&.8" "i3 Manual"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -295,6 +295,8 @@ If your battery is represented in a non\-standard path in /sys, be sure to modif
 .sp
 It is possible to define a low_threshold that causes the battery text to be colored red\&. The low_threshold type can be of threshold_type "time" or "percentage"\&. So, if you configure low_threshold to 10 and threshold_type to "time", and your battery lasts another 9 minutes, it will be colored red\&.
 .sp
+Will also send libnotify notifications whenever battery status changes (when the computer is plugged in or unplugged, or when the battery becomes full), or whenever your battery crosses the configured low_threshold\&. The format of these notifications can be controlled with notif_header_format and notif_body_format
+.sp
 \fBExample order\fR: battery 0
 .sp
 \fBExample format\fR: %status %remaining (%emptytime %consumption)
@@ -381,6 +383,19 @@ volume master {
 .if n \{\
 .RE
 .\}
+.SS "MPD"
+.sp
+Outputs the currently playing MPD track, using libmpdclient\&. Will display a libnotify notification whenever the track changes\&.
+.sp
+\fBExample order\fR: mpd
+.sp
+\fBExample format\fR: %artist \- %album \- %title
+.sp
+\fBExample format_stopped\fR: Stopped
+.sp
+\fBExample notif_header_format\fR: %title
+.sp
+\fBExample notif_body_format\fR: %artist \- %album
 .SH "USING I3STATUS WITH DZEN2"
 .sp
 After installing dzen2, you can directly use it with i3status\&. Just ensure that output_format is set to dzen2\&.
