@@ -20,6 +20,7 @@ if (BEGINS_WITH(walk + 1, option_name)) { \
 }
 
 static char *prev_song;
+static struct mpd_connection *conn;
 
 void mpd_format_string(
         struct mpd_song *song,
@@ -85,21 +86,21 @@ void print_mpd(
 ) {
         char *outwalk = buffer;
 
-        struct mpd_connection *conn;
         struct mpd_song *song;
 
         /* Use defaults */
-        if ((conn = mpd_connection_new(NULL, 0, 0)) == NULL) {
-                outwalk += sprintf(outwalk, "%s", format_stopped);
-                OUTPUT_FULL_TEXT(buffer);
-                return;
+        if (conn == NULL) {
+                if ((conn = mpd_connection_new(NULL, 0, 0)) == NULL) {
+                        outwalk += sprintf(outwalk, "%s", format_stopped);
+                        OUTPUT_FULL_TEXT(buffer);
+                        return;
+                }
         }
 
         /* Get current song */
         song = mpd_run_current_song(conn);
         if (song == NULL) {
                 outwalk += sprintf(outwalk, "%s", format_stopped);
-                mpd_connection_free(conn);
                 OUTPUT_FULL_TEXT(buffer);
                 return;
         }
@@ -145,8 +146,14 @@ void print_mpd(
 
 out:
         mpd_song_free(song);
-        mpd_connection_free(conn);
         OUTPUT_FULL_TEXT(buffer);
         return;
+}
+
+
+void cleanup_mpd() {
+        if (conn != NULL) {
+                mpd_connection_free(conn);
+        }
 }
 

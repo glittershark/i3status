@@ -159,6 +159,7 @@ void print_eth_info(yajl_gen json_gen, char *buffer, const char *interface, cons
 void print_load(yajl_gen json_gen, char *buffer, const char *format, const float max_threshold);
 void print_mpd(yajl_gen json_gen, char *buffer, const char *format, const char *format_stopped, const char *notif_header_format, const char *notif_body_format);
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *fmt_muted, const char *device, const char *mixer, int mixer_idx);
+void cleanup_mpd();
 bool process_runs(const char *path);
 
 /* socket file descriptor for general purposes */

@@ -462,6 +462,7 @@ int main(int argc, char *argv[]) {
         while (1) {
                 if (exit_upon_signal) {
                         fprintf(stderr, "Exiting due to signal.\n");
+                        cleanup_mpd();
                         notify_uninit();
                         exit(1);
                 }
@@ -611,5 +612,7 @@ int main(int argc, char *argv[]) {
                 struct timespec ts = {interval - 1 - (current_timeval.tv_sec % interval), (10e5 - current_timeval.tv_usec) * 1000};
                 nanosleep(&ts, NULL);
         }
+
+        cleanup_mpd();
         notify_uninit();
 }
