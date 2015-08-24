@@ -20,7 +20,7 @@ if (BEGINS_WITH(walk + 1, option_name)) { \
 }
 
 static char *prev_song;
-static struct mpd_connection *conn;
+static struct mpd_connection *conn = NULL;
 
 void mpd_format_string(
         struct mpd_song *song,
@@ -95,6 +95,14 @@ void print_mpd(
                         OUTPUT_FULL_TEXT(buffer);
                         return;
                 }
+        }
+
+        if (mpd_connection_get_error(conn) != MPD_ERROR_SUCCESS) {
+                mpd_connection_free(conn);
+                conn = NULL;
+                outwalk += sprintf(outwalk, "%s", format_stopped);
+                OUTPUT_FULL_TEXT(buffer);
+                return;
         }
 
         /* Get current song */
