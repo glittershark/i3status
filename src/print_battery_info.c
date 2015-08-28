@@ -57,7 +57,7 @@ struct battery_info battery_info_new(
 }
 
 #define BATTERY_OUTPUT_OPTION(option_name, property) \
-        if (BEGINS_WITH(walk + 1, option_name)) { \
+        else if (BEGINS_WITH(walk + 1, option_name)) { \
                 outwalk += sprintf(outwalk, "%s", info.property); \
                 walk += strlen(option_name); \
         }
@@ -65,11 +65,9 @@ struct battery_info battery_info_new(
 void battery_format_string(
         const struct battery_info info,
         const char *format,
-        char *str,
         char **output
 ) {
         char *outwalk = *output;
-        assert(outwalk == str);
 
         const char *walk;
 
@@ -79,6 +77,7 @@ void battery_format_string(
                         continue;
                 }
 
+                if (false) {}
                 BATTERY_OUTPUT_OPTION("status", status)
                 BATTERY_OUTPUT_OPTION("percentage", percentage)
                 BATTERY_OUTPUT_OPTION("remaining", remaining)
@@ -99,10 +98,10 @@ void battery_send_notification(
         char body[4096];
 
         outwalk = header;
-        battery_format_string(info, header_format, header, &outwalk);
+        battery_format_string(info, header_format, &outwalk);
 
         outwalk = body;
-        battery_format_string(info, body_format, body, &outwalk);
+        battery_format_string(info, body_format, &outwalk);
 
         NotifyNotification *battery_notification = notify_notification_new(header, body, "dialog-information");
 
