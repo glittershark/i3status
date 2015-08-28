@@ -85,6 +85,8 @@ void battery_format_string(
                 BATTERY_OUTPUT_OPTION("emptytime", emptytime)
                 BATTERY_OUTPUT_OPTION("consumption", consumption)
         }
+
+        *(outwalk++) = '\0';
 }
 
 void battery_send_notification(
