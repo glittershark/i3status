@@ -9,6 +9,7 @@
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 #include <libnotify/notify.h>
+#include <sys/time.h>
 
 #include "i3status.h"
 
@@ -24,7 +25,10 @@
 #include <machine/apmvar.h>
 #endif
 
+#define NOTIF_TIMEOUT_SECS 2
+
 static char *prev_status;
+static time_t prev_notif_time;
 static bool prev_critical = false;
 
 struct battery_info {
@@ -93,6 +97,15 @@ void battery_send_notification(
         const char *header_format,
         const char *body_format
 ) {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+
+        if (tv.tv_sec - prev_notif_time < NOTIF_TIMEOUT_SECS) {
+                return;
+        }
+
+        prev_notif_time = tv.tv_sec;
+
         char *outwalk;
         char header[4096];
         char body[4096];
